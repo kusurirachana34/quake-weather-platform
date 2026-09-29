@@ -1,12 +1,14 @@
-import requests
-import pandas as pd
+import time
 from datetime import datetime, timedelta, timezone
+
+import pandas as pd
+import requests
 
 USGS_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query"
 
 
-def fetch_earthquakes(days=1, min_magnitude=2.5):
-    """Ask the USGS API for earthquakes from the last `days` days."""
+def fetch_earthquakes(days=1, min_magnitude=2.5, max_retries=4):
+    """Ask the USGS API for recent earthquakes, retrying on temporary errors."""
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=days)
 
@@ -18,9 +20,20 @@ def fetch_earthquakes(days=1, min_magnitude=2.5):
         "orderby": "time",
     }
 
-    response = requests.get(USGS_URL, params=params, timeout=30)
-    response.raise_for_status()  # stops with an error if the request failed
-    return response.json()
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = requests.get(USGS_URL, params=params, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except (requests.ConnectionError, requests.Timeout, requests.HTTPError) as error:
+            status = getattr(error.response, "status_code", None)
+            is_client_error = status is not None and status < 500
+            # Our own mistakes (4xx) won't fix themselves, so don't retry those
+            if is_client_error or attempt == max_retries:
+                raise
+            wait = 2**attempt
+            print(f"Attempt {attempt} failed ({error}). Retrying in {wait}s...")
+            time.sleep(wait)
 
 
 def to_dataframe(data):
