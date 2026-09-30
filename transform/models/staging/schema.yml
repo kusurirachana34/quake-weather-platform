@@ -1,0 +1,33 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: earthquakes
+      - name: weather_daily
+
+models:
+  - name: stg_earthquakes
+    description: Cleaned earthquakes with a severity label and region.
+    columns:
+      - name: event_id
+        data_tests:
+          - unique
+          - not_null
+      - name: magnitude
+        data_tests:
+          - not_null
+      - name: event_time
+        data_tests:
+          - not_null
+
+  - name: stg_weather_daily
+    description: Daily weather per city with an average temperature.
+    columns:
+      - name: city
+        data_tests:
+          - not_null
+      - name: weather_date
+        data_tests:
+          - not_null

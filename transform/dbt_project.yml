@@ -1,0 +1,13 @@
+name: quake_weather
+version: "1.0.0"
+config-version: 2
+profile: quake_weather
+
+model-paths: ["models"]
+
+models:
+  quake_weather:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
