@@ -1,0 +1,8 @@
+services:
+  airflow-worker:
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_HOST: host.docker.internal
+    volumes:
+      - ../:/opt/airflow/project
